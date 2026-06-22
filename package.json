@@ -11,6 +11,7 @@
     "build": "node scripts/build.mjs",
     "dev": "node scripts/dev.mjs",
     "typecheck": "tsc --noEmit",
+    "package": "node scripts/package.mjs",
     "clean": "node scripts/clean.mjs"
   },
   "engines": {
