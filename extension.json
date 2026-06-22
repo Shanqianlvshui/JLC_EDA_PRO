@@ -1,0 +1,31 @@
+{
+  "name": "lceda-ai-mcp",
+  "uuid": "",
+  "displayName": "LCEDA AI MCP",
+  "description": "Expose JLC EDA Pro pro-api as MCP tools for AI agents (Claude Desktop, Cursor, Mavis CLI, etc.).",
+  "version": "0.1.0",
+  "publisher": "lceda-ai-mcp",
+  "engines": {
+    "eda": "^2.3.0"
+  },
+  "license": "Apache-2.0",
+  "categories": "Other",
+  "keywords": ["MCP", "AI", "Agent", "Automation"],
+  "images": {
+    "logo": "./images/logo.png"
+  },
+  "activationEvents": {},
+  "entry": "./dist/index",
+  "dependentExtensions": {},
+  "headerMenus": {
+    "home": [],
+    "blank": [],
+    "sch": [],
+    "symbol": [],
+    "pcb": [],
+    "footprint": [],
+    "pcbView": [],
+    "panel": [],
+    "panelView": []
+  }
+}

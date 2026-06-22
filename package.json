@@ -1,0 +1,40 @@
+{
+  "name": "lceda-ai-mcp",
+  "version": "0.1.0",
+  "description": "JLC EDA Pro plugin that exposes all pro-api methods as MCP tools, bridged to MCP clients via a local relay.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "lceda-mcp-relay": "bin/mcp-relay.mjs"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "typecheck": "tsc --noEmit",
+    "clean": "node scripts/clean.mjs"
+  },
+  "engines": {
+    "node": ">=20.5.0"
+  },
+  "keywords": [
+    "jlc",
+    "lceda",
+    "eda",
+    "pcb",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "agent"
+  ],
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@jlceda/pro-api-types": "^0.2.62",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/ws": "^8.5.10",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.0"
+  }
+}
