@@ -20,7 +20,7 @@ import path from "node:path";
 import os from "node:os";
 import { WebSocketServer } from "ws";
 import { fileURLToPath } from "node:url";
-import { searchLcsc, lcscSearchTool } from "./lcsc-search.mjs";
+import { lcscSearchTool, lcscGetTool, remapLcscSearch, remapLcscGetByIds } from "./lcsc-search.mjs";
 
 const execP = promisify(exec);
 
@@ -185,8 +185,14 @@ function bindPluginConnection(ws) {
 let nextId = 1;
 const pendingFromPlugin = new Map();
 
-/** Tools implemented by the relay itself (not forwarded to the plugin). */
-const SYNTHETIC_TOOLS = [lcscSearchTool];
+/**
+ * Tools implemented locally by the relay as friendly aliases. Each one is
+ * remapped to a real pro-api call and forwarded to the plugin (so the
+ * plugin's `eda.sys_WebSocket` and the live LCSC backend in EDA Pro do the
+ * actual work — no HTTP fetch from the relay side, since the public LCSC
+ * web API is undocumented and would require its own auth flow).
+ */
+const LOCAL_TOOL_ALIASES = [lcscSearchTool, lcscGetTool];
 
 /** Cached tool list fetched from the plugin; refreshed on each tools/list call. */
 let pluginToolsCache = { tools: [], ts: 0 };
@@ -263,12 +269,12 @@ async function dispatchRequest(method, params) {
     return await listTools();
   }
 
-  // tools/call: synthetic tools handled locally, others forwarded to the plugin.
+  // tools/call: local aliases remapped to plugin tools, everything else forwarded.
   if (method === "tools/call") {
     const name = params?.name;
     if (!name) throw new Error("tools/call: missing 'name' in params");
-    if (SYNTHETIC_TOOLS.some((t) => t.name === name)) {
-      return await callSynthetic(name, params.arguments ?? {});
+    if (LOCAL_TOOL_ALIASES.some((t) => t.name === name)) {
+      return await callLocalAlias(name, params.arguments ?? {});
     }
     return await callPluginTool(name, params.arguments ?? {});
   }
@@ -290,21 +296,25 @@ async function listTools() {
       pluginTools = pluginToolsCache.tools;
     }
   }
-  return { tools: [...SYNTHETIC_TOOLS, ...pluginTools] };
+  return { tools: [...LOCAL_TOOL_ALIASES, ...pluginTools] };
 }
 
-async function callSynthetic(name, args) {
+async function callLocalAlias(name, args) {
+  // Each local alias is remapped to the real pro-api tool name + arg shape
+  // and then forwarded to the plugin (no HTTP fetch from the relay).
+  let remapped;
   switch (name) {
-    case "lcsc_search": {
-      const query = String(args.query ?? "").trim();
-      if (!query) throw new Error("lcsc_search: 'query' is required");
-      const limit = Number(args.limit ?? 20);
-      const items = await searchLcsc(query, limit);
-      return { content: [{ type: "text", text: JSON.stringify(items, null, 2) }] };
-    }
+    case "lcsc_search":
+      remapped = remapLcscSearch(args);
+      break;
+    case "lcsc_get":
+      remapped = remapLcscGetByIds(args);
+      break;
     default:
-      throw new Error(`Unknown synthetic tool: ${name}`);
+      throw new Error(`Unknown local alias: ${name}`);
   }
+  const result = await callPluginTool(remapped.toolName, remapped.args);
+  return result;
 }
 
 async function callPluginTool(name, args) {

@@ -7,7 +7,11 @@ import type { CallToolResult, McpContent, ToolName } from "./protocol.ts";
 
 type Eda = Record<string, unknown>;
 
-export function executeTool(eda: Eda, name: ToolName, args: Record<string, unknown> | undefined): CallToolResult["result"] {
+export async function executeTool(
+  eda: Eda,
+  name: ToolName,
+  args: Record<string, unknown> | undefined,
+): Promise<CallToolResult["result"]> {
   const parsed = parseToolName(name);
   if (!parsed) {
     return errorResult(`Invalid tool name: ${name}. Expected "eda.<class>.<method>".`);
@@ -25,26 +29,35 @@ export function executeTool(eda: Eda, name: ToolName, args: Record<string, unkno
   }
 
   try {
-    const argArray = args ? Object.values(args) : [];
-    // Last-resort: many pro-api methods accept a single options object.
-    // If args has exactly one entry whose value is an object, pass that object.
-    const argEntries = args ? Object.entries(args) : [];
+    // Args come in two shapes:
+    //   (a) JSON object `{key: "STM32", itemsOfPage: 20}` — we pass values
+    //       positionally via Object.values. Keys are not preserved, so the
+    //       order of keys MUST match the pro-api positional signature.
+    //   (b) JSON array `["STM32", undefined, undefined, undefined, 20, 1]` —
+    //       explicit positional form, used when the relay remaps a friendly
+    //       alias to its real pro-api positional call. Forwarded as-is.
     let callArgs: unknown[];
-    if (argEntries.length === 1) {
-      const [, v] = argEntries[0]!;
-      callArgs = [v];
+    if (Array.isArray(args)) {
+      callArgs = args;
+    } else if (args && typeof args === "object") {
+      callArgs = Object.values(args);
     } else {
-      callArgs = argArray;
+      callArgs = [];
     }
 
     const out = (fn as (...a: unknown[]) => unknown).apply(instance, callArgs);
 
+    // Almost every pro-api method returns a Promise. Await it.
+    let resolved: unknown = out;
     if (out && typeof (out as Promise<unknown>).then === "function") {
-      // Async method — we can't await here (sync tool spec). Return a marker.
-      return textResult(`[async] ${name} returned a Promise; promise result not yet implemented.`);
+      try {
+        resolved = await (out as Promise<unknown>);
+      } catch (e) {
+        return errorResult(`eda.${classProp}.${method} rejected: ${(e as Error)?.message ?? String(e)}`);
+      }
     }
 
-    return textResult(safeStringify(out));
+    return textResult(safeStringify(resolved));
   } catch (e) {
     return errorResult(`eda.${classProp}.${method} threw: ${(e as Error)?.message ?? String(e)}`);
   }
