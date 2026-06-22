@@ -102,11 +102,24 @@ export function showTestDialog(): void {
     const edaAny = eda as Record<string, unknown>;
     const wsType = typeof edaAny.sys_WebSocket;
     const wsHasRegister = typeof (edaAny.sys_WebSocket as { register?: unknown } | undefined)?.register;
+
+    // Self-heal: if the bridge didn't survive a page reload, recreate it.
+    if (!bridge) {
+      try {
+        log("info", "showTestDialog: bridge is null, recreating...");
+        bridge = new WsBridge(handleRequest);
+        bridge.start();
+        log("info", "showTestDialog: bridge recreated and started.");
+      } catch (e) {
+        log("error", `showTestDialog: bridge recreate failed: ${(e as Error)?.message ?? e}`);
+      }
+    }
+
     if (dialog?.showInformationMessage) {
       const tools = getTools();
       const bridgeInfo = bridge
         ? `created (attempt=${bridge.debugAttempt()}, stopped=${bridge.debugStopped()})`
-        : "null";
+        : "null (recreate failed)";
       dialog.showInformationMessage(
         [
           `Tools cached: ${tools.length}`,
