@@ -27,13 +27,77 @@
         ]
       }
     ],
-    "blank": [],
-    "sch": [],
-    "symbol": [],
-    "pcb": [],
-    "footprint": [],
-    "pcbView": [],
-    "panel": [],
-    "panelView": []
+    "blank": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "sch": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "symbol": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "pcb": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "footprint": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "pcbView": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "panel": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
+    "panelView": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ]
   }
 }
