@@ -74,7 +74,7 @@ export function activate(): void {
   showStartupToast();
   // 2. Background log
   try {
-    log("info", "activate() called — plugin starting up.");
+    log("info", `activate() called. eda=${typeof eda}, eda.sys_WebSocket=${typeof (eda as { sys_WebSocket?: unknown }).sys_WebSocket}, eda.sys_Dialog=${typeof (eda as { sys_Dialog?: unknown }).sys_Dialog}, eda.sys_Log=${typeof (eda as { sys_Log?: unknown }).sys_Log}`);
     getTools();
     bridge = new WsBridge(handleRequest);
     bridge.start();
@@ -99,10 +99,21 @@ export function showTestDialog(): void {
   try {
     const dialog = (eda as { sys_Dialog?: { showInformationMessage?: (m: string, t: string) => void } })
       .sys_Dialog;
+    const edaAny = eda as Record<string, unknown>;
+    const wsType = typeof edaAny.sys_WebSocket;
+    const wsHasRegister = typeof (edaAny.sys_WebSocket as { register?: unknown } | undefined)?.register;
     if (dialog?.showInformationMessage) {
       const tools = getTools();
+      const bridgeInfo = bridge
+        ? `created (attempt=${bridge.debugAttempt()}, stopped=${bridge.debugStopped()})`
+        : "null";
       dialog.showInformationMessage(
-        `Tools cached: ${tools.length}. Bridge running: ${bridge !== null}.`,
+        [
+          `Tools cached: ${tools.length}`,
+          `Bridge: ${bridgeInfo}`,
+          `eda.sys_WebSocket: ${wsType}, has register: ${wsHasRegister}`,
+          `URL: ws://127.0.0.1:7842`,
+        ].join("\n"),
         "LCEDA AI MCP — test",
       );
     } else {

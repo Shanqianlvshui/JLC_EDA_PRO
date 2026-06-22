@@ -46,17 +46,24 @@ export class WsBridge {
     if (this.connected) return;
 
     try {
+      console.log("[lceda-ai-mcp] WsBridge.tryConnect: calling eda.sys_WebSocket.register", RELAY_URL);
       eda.sys_WebSocket.register(
         WS_ID,
         RELAY_URL,
-        (event) => this.handleMessage(event),
+        (event) => {
+          console.log("[lceda-ai-mcp] WsBridge got connected (callback fired)");
+          this.handleMessage(event);
+        },
         () => {
+          console.log("[lceda-ai-mcp] WsBridge connectedCallFn fired");
           this.connected = true;
           this.attempt = 0;
         },
         [],
       );
-    } catch {
+      console.log("[lceda-ai-mcp] WsBridge.register() returned without throwing");
+    } catch (e) {
+      console.log(`[lceda-ai-mcp] WsBridge.register() threw: ${(e as Error)?.message ?? e}`);
       // EDA throws if external-interaction permission is off, or relay not yet listening
       this.scheduleReconnect();
     }
@@ -105,4 +112,8 @@ export class WsBridge {
       this.scheduleReconnect();
     }
   }
+
+  // --- diagnostics for showTestDialog ---
+  debugAttempt(): number { return this.attempt; }
+  debugStopped(): boolean { return this.stopped; }
 }
