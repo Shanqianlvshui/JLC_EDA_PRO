@@ -1,8 +1,13 @@
 /**
- * Build script: bundle the TypeScript plugin code into a single ESM file
- * that JLC EDA Pro can load via the `entry` field in extension.json.
+ * Build script: bundle the TypeScript plugin code into a single IIFE script
+ * that JLC EDA Pro loads and reads from the global `edaEsbuildExportName`.
  *
  * Output: dist/index.js (and dist/index.js.map for debugging).
+ *
+ * CRITICAL: format must be `iife` and globalName must be `edaEsbuildExportName`
+ * (the pro-api-sdk convention). EDA Pro reads exports like `activate`,
+ * `deactivate` from this global; using ESM `format: "esm"` would silently
+ * fail to load the extension.
  */
 import { build } from "esbuild";
 import { randomBytes } from "node:crypto";
@@ -22,16 +27,14 @@ if (!ext.uuid || !/^[a-z0-9]{32}$/.test(ext.uuid)) {
 
 await build({
   entryPoints: ["src/index.ts"],
-  outfile: "dist/index.js",
+  entryNames: "[name]",
+  outdir: "dist",
   bundle: true,
-  format: "esm",
-  target: "es2022",
+  format: "iife",
+  globalName: "edaEsbuildExportName",
   platform: "browser",
+  target: "es2022",
   sourcemap: true,
-  // The plugin runs in the EDA host's sandbox. We intentionally leave
-  // `eda` un-bundled (it's a runtime global) by NOT marking it external —
-  // it isn't imported anywhere, only referenced as a global, so esbuild
-  // leaves it alone.
   logLevel: "info",
 });
 
