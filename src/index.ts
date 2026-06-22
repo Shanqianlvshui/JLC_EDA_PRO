@@ -52,6 +52,9 @@ function getTools(): McpTool[] {
 }
 
 async function handleRequest(req: { id: string; method: string; params?: unknown }): Promise<unknown> {
+  // Lazy bridge: first request comes in via plugin WS, make sure the
+  // bridge object is alive (it can be nulled by a page-cycle deactivate).
+  ensureBridge();
   switch (req.method) {
     case "tools/list": {
       return { tools: getTools() };
@@ -75,12 +78,29 @@ export function activate(): void {
   // 2. Background log
   try {
     log("info", `activate() called. eda=${typeof eda}, eda.sys_WebSocket=${typeof (eda as { sys_WebSocket?: unknown }).sys_WebSocket}, eda.sys_Dialog=${typeof (eda as { sys_Dialog?: unknown }).sys_Dialog}, eda.sys_Log=${typeof (eda as { sys_Log?: unknown }).sys_Log}`);
+    // Pre-warm tool cache so the first MCP request is fast.
     getTools();
-    bridge = new WsBridge(handleRequest);
-    bridge.start();
-    log("info", "WebSocket bridge started, polling ws://127.0.0.1:7842.");
+    log("info", "activate(): bridge is NOT auto-started (use Test activation or first MCP request to start).");
   } catch (e) {
     log("error", `activate() failed: ${(e as Error)?.message ?? e}`);
+  }
+}
+
+/**
+ * Lazily start the bridge. Called from showTestDialog and from the
+ * handleRequest entrypoint so the bridge comes up on first real use,
+ * survives activate→deactivate page cycles, and never blocks activate().
+ */
+function ensureBridge(): void {
+  if (bridge && !bridge.debugStopped()) return;
+  try {
+    log("info", "ensureBridge: (re)creating WsBridge...");
+    bridge = new WsBridge(handleRequest);
+    bridge.start();
+    log("info", "ensureBridge: bridge started.");
+  } catch (e) {
+    log("error", `ensureBridge failed: ${(e as Error)?.message ?? e}`);
+    bridge = null;
   }
 }
 
@@ -104,16 +124,7 @@ export function showTestDialog(): void {
     const wsHasRegister = typeof (edaAny.sys_WebSocket as { register?: unknown } | undefined)?.register;
 
     // Self-heal: if the bridge didn't survive a page reload, recreate it.
-    if (!bridge) {
-      try {
-        log("info", "showTestDialog: bridge is null, recreating...");
-        bridge = new WsBridge(handleRequest);
-        bridge.start();
-        log("info", "showTestDialog: bridge recreated and started.");
-      } catch (e) {
-        log("error", `showTestDialog: bridge recreate failed: ${(e as Error)?.message ?? e}`);
-      }
-    }
+    ensureBridge();
 
     if (dialog?.showInformationMessage) {
       const tools = getTools();
