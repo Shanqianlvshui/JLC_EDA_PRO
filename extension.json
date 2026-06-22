@@ -18,7 +18,15 @@
   "entry": "./dist/index",
   "dependentExtensions": {},
   "headerMenus": {
-    "home": [],
+    "home": [
+      {
+        "id": "lceda-ai-mcp-menu",
+        "title": "LCEDA AI MCP",
+        "menuItems": [
+          { "id": "test", "title": "Test activation", "registerFn": "showTestDialog" }
+        ]
+      }
+    ],
     "blank": [],
     "sch": [],
     "symbol": [],
